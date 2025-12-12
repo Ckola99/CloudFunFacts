@@ -11,7 +11,7 @@ def create_dynamodb_table():
 
     # Check if the definition file exists
     if not os.path.exists(TABLE_DEFINITION_PATH):
-        print(f"❌ Error: Table definition file not found at {TABLE_DEFINITION_PATH}")
+        print(f" Error: Table definition file not found at {TABLE_DEFINITION_PATH}")
         return
 
     print(f"Starting DynamoDB table creation using definition file: {TABLE_DEFINITION_PATH}")
