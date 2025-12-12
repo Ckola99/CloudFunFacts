@@ -67,6 +67,8 @@ Debugging IAM errors provided real-world experience with:
 ```
 User → API Gateway → Lambda → DynamoDB → (Optional AI: Bedrock)
 ```
+## 📊 Architecture Diagram
+![Cloud Fun Facts Architecture](infrastructure/architecture-diagram.png)
 
 ### Why this stack?
 
