@@ -1,0 +1,4 @@
+GET /funfact
+→ Lambda: funfacts_lambda
+→ Integration: Lambda Proxy
+→ CORS: Enabled

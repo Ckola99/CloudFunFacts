@@ -1,0 +1,10 @@
+{
+  "TableName": "CloudFunFacts2",
+  "AttributeDefinitions": [
+    { "AttributeName": "FactID", "AttributeType": "S" }
+  ],
+  "KeySchema": [
+    { "AttributeName": "FactID", "KeyType": "HASH" }
+  ],
+  "BillingMode": "PAY_PER_REQUEST"
+}
