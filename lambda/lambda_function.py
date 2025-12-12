@@ -1,33 +1,81 @@
 import random
 import json
+import boto3
+
+# Create DynamoDB client
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('CloudFacts')
+
+# Bedrock client
+bedrock = boto3.client("bedrock-runtime")
+MODEL_ID = "openai.gpt-oss-120b-1:0"
 
 def lambda_handler(event, context):
-    facts = [
-        "AWS S3 was launched in 2006 and still rules cloud storage.",
-        "Cloud computing can save companies up to 30% on IT costs.",
-        "EC2 was one of the first AWS services to change IT forever.",
-        "AWS offers more than 200 services — that`s more than Starbucks drinks!",
-        "Cloud lets you pay-as-you-go, just like your Netflix subscription.",
-        "The name 'Amazon Web Services' was first used back in 2002.",
-        "AWS data centers are so secure they require palm scanners.",
-        "Netflix runs most of its infrastructure on AWS.",
-        "Amazon DynamoDB can handle more than 10 trillion requests per day.",
-        "AWS Lambda was launched in 2014 and started the serverless trend.",
-        "Cloud reduces CO₂ emissions by optimizing energy usage.",
-        "AWS regions have multiple Availability Zones for reliability.",
-        "Amazon originally created S3 to solve its own scaling issues.",
-        "More than 80% of Fortune 500 companies use AWS.",
-        "Cloud helps startups scale globally without huge upfront costs.",
-        "Amazon`s first region outside the US was launched in Ireland (2007).",
-        "AWS provides free tiers so students can build projects affordably.",
-        "AWS CloudFront is one of the largest CDNs in the world.",
-        "Serverless means you never patch servers — AWS does it for you!",
-        "AWS is the market leader in cloud with ~32% share (as of 2025)."
+    # scan entire table only because of small dataset
+    response = table.scan()
+    items = response.get('Items', [])
+
+    if not items:
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type"
+            },
+            "body": json.dumps({"fact": "No facts available in DynamoDB."})
+        }
+
+    fact = random.choice(items)["FactText"]
+
+
+     # Messages for AI model
+    messages = [
+        {
+            "role": "user",
+            "content": f"Take this cloud computing fact and make it fun and engaging in 1-2 sentences maximum. Keep it short and witty: {fact}"
+        }
     ]
 
-    fact = random.choice(facts)
+    body = {
+        "messages": messages,
+        "max_tokens": 100,
+        "temperature": 0.7
+    }
+
+    try:
+        bedrock_response = bedrock.invoke_model(
+            modelId=MODEL_ID,
+            body=json.dumps(body),
+            contentType='application/json',
+            accept='application/json'
+        )
+
+        result = json.loads(bedrock_response['body'].read())
+        witty_fact= ""
+
+        if "content" in result and result["content"]:
+            for block in result["content"]:
+                if block.get("type") == "text":
+                    witty_fact = block["text"].strip()
+                    break
+
+        if not witty_fact or len(witty_fact) > 300:
+            witty_fact = fact
+
+    except Exception as e:
+        print(f"Bedrock error: {e}")
+        witty_fact = fact
+
+
     return {
         "statusCode": 200,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps({"fact": fact})
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type"
+        },
+        "body": json.dumps({"fact": witty_fact})
     }
